@@ -69,7 +69,16 @@ namespace AtelierAPI.Data
                 new CategoryModel { Id = 1, Category = "Concept Development" },
                 new CategoryModel { Id = 2, Category = "Design & Prototyping" },
                 new CategoryModel { Id = 3, Category = "Manufacturing & Production" },
-                new CategoryModel { Id = 4, Category = "Sustainability & Green Technology" }
+                new CategoryModel { Id = 4, Category = "Sustainability & Green Technology" },
+                new CategoryModel { Id = 5, Category = "Sustainability and ESG (Environmental, Social, Governance)" },
+                new CategoryModel { Id = 6, Category = "Installation and Deployment" },
+                new CategoryModel { Id = 7, Category = "Operational Efficiency" },
+                new CategoryModel { Id = 8, Category = "Cost Optimization" },
+                new CategoryModel { Id = 9, Category = "Safety and Risk Management" },
+                new CategoryModel { Id = 10, Category = "Regulatory Compliance" },
+                new CategoryModel { Id = 11, Category = "Customer-Focused Initiatives" },
+                new CategoryModel { Id = 12, Category = "-Digitalization and Data Management" }
+                
             );
         }
     }

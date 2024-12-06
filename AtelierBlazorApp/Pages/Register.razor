@@ -4,7 +4,15 @@
 @using AtelierShared.Models
 @using Microsoft.AspNetCore.Components.Forms
 
-
+<style>
+    .register-container {
+        max-width: 400px;
+        margin: 50px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+</style>
 
 <div class="register-container">
     <h3>Register</h3>
@@ -18,13 +26,14 @@
         </div>
 
         <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <InputText id="email" class="form-control" @bind-Value="registerRequest.Email" />
+        </div>
+
+        <div class="mb-3">
             <label for="password" class="form-label">Password</label>
             <InputText id="password" class="form-control" @bind-Value="registerRequest.Password" type="password" />
         </div>
-         <div>
-        <label>Email:</label>
-        <InputText @bind-Value="registerRequest.Email" />
-    </div>
 
         <button type="submit" class="btn btn-primary">Register</button>
     </EditForm>
