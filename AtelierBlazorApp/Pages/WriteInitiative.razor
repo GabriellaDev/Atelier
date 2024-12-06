@@ -150,7 +150,7 @@
 
 
         // Create the HTTP request
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:5062/api/InitiativePost");
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://localhost:5062/api/InitiativePosts");
         request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 

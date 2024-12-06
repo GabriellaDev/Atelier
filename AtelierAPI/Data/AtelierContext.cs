@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using AtelierShared.Models; 
+using AtelierShared.Models;
 
 namespace AtelierAPI.Data
 {
@@ -15,23 +15,23 @@ namespace AtelierAPI.Data
         // DbSets
         public DbSet<User>? Users { get; set; }
         public DbSet<InitiativePost>? InitiativePosts { get; set; }
-        public DbSet<CategoryModel>? Category {get; set; }
+        public DbSet<CategoryModel>? Category { get; set; }
         public object Categories { get; internal set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-{
-    base.OnConfiguring(optionsBuilder);
+        {
+            base.OnConfiguring(optionsBuilder);
 
-    optionsBuilder.UseSqlite(
-    optionsBuilder.Options.FindExtension<Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal.SqliteOptionsExtension>()?.ConnectionString 
-    ?? throw new InvalidOperationException("No connection string configured.")
-);
+            optionsBuilder.UseSqlite(
+            optionsBuilder.Options.FindExtension<Microsoft.EntityFrameworkCore.Sqlite.Infrastructure.Internal.SqliteOptionsExtension>()?.ConnectionString
+            ?? throw new InvalidOperationException("No connection string configured.")
+        );
 
 
-    // Suppress the pending model changes warning (use only during debugging)
-    optionsBuilder.ConfigureWarnings(warnings =>
-        warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
-}
+            // Suppress the pending model changes warning (use only during debugging)
+            optionsBuilder.ConfigureWarnings(warnings =>
+                warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
+        }
 
 
 

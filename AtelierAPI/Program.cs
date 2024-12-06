@@ -15,9 +15,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:5199") // Allow Blazor app origin (AtelierBlazorApp folder)
+        policy.WithOrigins("https://localhost:7106", "http://localhost:7106") // Allow Blazor app origin (AtelierBlazorApp folder)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -52,7 +53,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
-     options.TokenValidationParameters = new TokenValidationParameters
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
@@ -89,7 +90,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Use CORS
+// Use CORS (make sure to apply it before UseAuthentication)
 app.UseCors("AllowSpecificOrigins");
 
 // Configure the HTTP request pipeline

@@ -1,17 +1,283 @@
 @page "/account"
+@inject HttpClient Http
+@inject AuthService AuthService
 @inject NavigationManager Navigation
 
-<div class="container my-5 text-center">
-    <h1>Welcome to the Initiative Platform</h1>
-    <p>To propose an initiative, you need to have an account. Please log in or register to get started.</p>
+@using AtelierBlazorApp.Services
+@using System.Net.Http.Headers
+@using System.Text.Json
+@using System.Text
 
-    <div class="mt-4">
-        <button class="btn btn-primary btn-lg m-2" @onclick="NavigateToLogin">Log In</button>
-        <button class="btn btn-secondary btn-lg m-2" @onclick="NavigateToRegister">Register</button>
+@if (!isLoggedIn)
+{
+    <div class="container my-5 text-center">
+        <h1>Welcome to the Initiative Platform</h1>
+        <p>To manage your initiatives, please log in.</p>
+        <div class="mt-4">
+            <button class="btn btn-primary btn-lg m-2" @onclick="NavigateToLogin">Log In</button>
+            <button class="btn btn-secondary btn-lg m-2" @onclick="NavigateToRegister">Register</button>
+        </div>
     </div>
-</div>
+}
+else
+{
+    <div class="container my-5">
+        <h1 class="mb-4">Your Initiatives</h1>
+
+        @if (UserInitiatives == null)
+        {
+            <p>Loading...</p>
+        }
+        else if (!UserInitiatives.Any())
+        {
+            <p>You haven't submitted any initiatives yet.</p>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var initiative in UserInitiatives)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow">
+                            <div class="card-body">
+                                @if (initiativeBeingEdited?.Id == initiative.Id)
+                                {
+                                    <EditForm Model="initiativeBeingEdited" OnValidSubmit="SaveChanges">
+                                        <DataAnnotationsValidator />
+                                        <ValidationSummary />
+
+                                        <div class="mb-3">
+                                            <label for="title" class="form-label">Title</label>
+                                            <InputText id="title" class="form-control" @bind-Value="initiativeBeingEdited.Title" />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="content" class="form-label">Content</label>
+                                            <InputTextArea id="content" class="form-control" @bind-Value="initiativeBeingEdited.Content" rows="3" />
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="category" class="form-label">Category</label>
+                                            <InputSelect id="category" class="form-control" @bind-Value="initiativeBeingEdited.CategoryId">
+                                                <option value="0">-- Select a Category --</option>
+                                                @foreach (var category in Categories)
+                                                {
+                                                    <option value="@category.Id">@category.Category</option>
+                                                }
+                                            </InputSelect>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-success btn-sm">Save</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" @onclick="CancelEdit">Cancel</button>
+                                    </EditForm>
+                                }
+                                else
+                                {
+                                    <h5 class="card-title">@initiative.Title</h5>
+                                    <p>@initiative.Content</p>
+                                    <p><strong>Category:</strong> @initiative.Category?.Category</p>
+                                    <p><small class="text-muted">Published on: @initiative.DatePublished.ToString("dd MMM yyyy")</small></p>
+                                    <button class="btn btn-warning btn-sm" @onclick="() => EditInitiative(initiative)">Edit</button>
+                                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteInitiative(initiative.Id)">Delete</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+         <div class="text-center mt-4">
+        <button class="btn btn-danger" @onclick="Logout">Log Out</button>
+    </div>
+    </div>
+
+}
 
 @code {
+    private bool isLoggedIn = false;
+    private List<InitiativePost> UserInitiatives = new();
+    private InitiativePost? initiativeBeingEdited;
+    private List<CategoryModel> Categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoggedIn = await AuthService.IsUserLoggedIn();
+
+        if (isLoggedIn)
+        {
+            await LoadCategories();
+            await LoadUserInitiatives();
+        }
+    }
+
+    private async Task LoadUserInitiatives()
+{
+    try
+    {
+        var token = await AuthService.GetTokenAsync();
+
+        if (string.IsNullOrEmpty(token))
+        {
+            Console.WriteLine("User is not logged in.");
+            return;
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Get, "https://localhost:5062/api/InitiativePosts/user");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            UserInitiatives = await response.Content.ReadFromJsonAsync<List<InitiativePost>>();
+            Console.WriteLine($"Loaded {UserInitiatives.Count} initiatives.");
+        }
+        else
+        {
+            Console.WriteLine($"Failed to load initiatives: {response.StatusCode}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Failed to load initiatives: {ex.Message}");
+    }
+}
+
+
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            Categories = await Http.GetFromJsonAsync<List<CategoryModel>>("https://localhost:5062/api/Categories");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load categories: {ex.Message}");
+        }
+    }
+
+    private void EditInitiative(InitiativePost initiative)
+    {
+        initiativeBeingEdited = new InitiativePost
+        {
+            Id = initiative.Id,
+            Title = initiative.Title,
+            Content = initiative.Content,
+            CategoryId = initiative.CategoryId,
+            DatePublished = initiative.DatePublished
+        };
+    }
+
+    private void CancelEdit()
+    {
+        initiativeBeingEdited = null;
+    }
+
+    private async Task SaveChanges()
+{
+    try
+    {
+        var token = await AuthService.GetTokenAsync();
+
+        if (string.IsNullOrEmpty(token))
+        {
+            Console.WriteLine("Token is missing. Redirecting to login.");
+            Navigation.NavigateTo("/auth/login");
+            return;
+        }
+
+        // Prepare the payload
+        var payload = new
+        {
+            Id = initiativeBeingEdited.Id,
+            Title = initiativeBeingEdited.Title,
+            Content = initiativeBeingEdited.Content,
+            CategoryId = initiativeBeingEdited.CategoryId
+        };
+
+        Console.WriteLine($"Payload being sent: {JsonSerializer.Serialize(payload)}");
+
+        // Create HTTP PUT request
+        var request = new HttpRequestMessage(HttpMethod.Put, $"https://localhost:5062/api/InitiativePosts/{initiativeBeingEdited.Id}");
+        request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Send the request
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                // Handle 204 No Content
+                Console.WriteLine("Changes saved successfully! (No Content returned)");
+
+                // Optionally, update the UI manually since no data is returned
+                var index = UserInitiatives.FindIndex(i => i.Id == initiativeBeingEdited.Id);
+                if (index != -1)
+                {
+                    UserInitiatives[index] = initiativeBeingEdited;
+                }
+                initiativeBeingEdited = null;
+            }
+            else
+            {
+                // If JSON response is returned (not 204), handle it
+                var updatedInitiative = await response.Content.ReadFromJsonAsync<InitiativePost>();
+                var index = UserInitiatives.FindIndex(i => i.Id == updatedInitiative.Id);
+                if (index != -1)
+                {
+                    UserInitiatives[index] = updatedInitiative;
+                }
+                initiativeBeingEdited = null;
+                Console.WriteLine("Changes saved successfully!");
+            }
+
+            Navigation.NavigateTo("/initiatives"); // Navigate after success
+        }
+        else
+        {
+            var errorDetails = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Failed to save changes: {response.StatusCode} - {errorDetails}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error saving changes: {ex.Message}");
+    }
+}
+
+
+
+
+
+    private async Task DeleteInitiative(int id)
+{
+    try
+    {
+        var token = await AuthService.GetTokenAsync();
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"https://localhost:5062/api/InitiativePosts/{id}");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.SendAsync(request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            UserInitiatives = UserInitiatives.Where(i => i.Id != id).ToList();
+        }
+        else
+        {
+            Console.WriteLine($"Failed to delete initiative: {response.StatusCode}");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error deleting initiative: {ex.Message}");
+    }
+}
+
+
     private void NavigateToLogin()
     {
         Navigation.NavigateTo("/auth/login");
@@ -20,5 +286,12 @@
     private void NavigateToRegister()
     {
         Navigation.NavigateTo("/auth/register");
+    }
+
+     private async Task Logout()
+    {
+        await AuthService.Logout();
+        isLoggedIn = false;
+        Navigation.NavigateTo("/Auth/login");
     }
 }

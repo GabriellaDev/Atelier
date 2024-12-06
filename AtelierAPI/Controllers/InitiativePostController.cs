@@ -21,23 +21,23 @@ namespace AtelierAPI.Controllers
 
         // GET: api/InitiativePosts
         [HttpGet]
-public async Task<ActionResult<IEnumerable<InitiativePost>>> GetInitiativePosts()
-{
-    try
-    {
-        // Include related Category navigation property
-        var initiatives = await _context.InitiativePosts
-            .Include(i => i.Category) // Load Category details
-            .ToListAsync();
+        public async Task<ActionResult<IEnumerable<InitiativePost>>> GetInitiativePosts()
+        {
+            try
+            {
+                // Include related Category navigation property
+                var initiatives = await _context.InitiativePosts
+                    .Include(i => i.Category) // Load Category details
+                    .ToListAsync();
 
-        return Ok(initiatives);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error fetching initiatives: {ex.Message}");
-        return StatusCode(500, "An error occurred while fetching initiatives.");
-    }
-}
+                return Ok(initiatives);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching initiatives: {ex.Message}");
+                return StatusCode(500, "An error occurred while fetching initiatives.");
+            }
+        }
 
 
         // GET: api/InitiativePost/5
@@ -54,96 +54,139 @@ public async Task<ActionResult<IEnumerable<InitiativePost>>> GetInitiativePosts(
 
         // POST: api/InitiativePost
         [HttpPost]
-[Authorize]
-public async Task<ActionResult<InitiativePost>> PostInitiativePost(InitiativePost initiativePostRequest)
-{
-    // Extract User ID from the token using the correct claim type
-    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-    if (string.IsNullOrEmpty(userId))
-    {
-        return Unauthorized(new
+        [Authorize]
+        public async Task<ActionResult<InitiativePost>> PostInitiativePost(InitiativePost initiativePostRequest)
         {
-            message = "User ID not found in token.",
-            claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
-        });
-    }
+            // Extract User ID from the token using the correct claim type
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-    Console.WriteLine($"Extracted User ID: {userId}");
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new
+                {
+                    message = "User ID not found in token.",
+                    claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
+                });
+            }
 
-    if (initiativePostRequest.Category == null || initiativePostRequest.Category.Id <= 0)
-{
-    throw new ArgumentException("Invalid or missing Category.");
-}
+            Console.WriteLine($"Extracted User ID: {userId}");
 
-    // Create a new InitiativePost object to save to the database
-    var initiativePost = new InitiativePost
-    {
-        Title = initiativePostRequest.Title,
-        Content = initiativePostRequest.Content,
-        AuthorId = int.Parse(userId), // Use the ID from the token
-        DatePublished = DateTime.UtcNow,
-        CategoryId = initiativePostRequest.CategoryId
-    };
+            if (initiativePostRequest.Category == null || initiativePostRequest.Category.Id <= 0)
+            {
+                throw new ArgumentException("Invalid or missing Category.");
+            }
 
-    try
-    {
-        // Add the new InitiativePost object to the database
-        _context.InitiativePosts.Add(initiativePost);
-        await _context.SaveChangesAsync();
-
-        // Return the newly created object
-        return CreatedAtAction(nameof(GetInitiativePost), new { id = initiativePost.Id }, initiativePost);
-    }
-    catch (DbUpdateException dbEx)
-    {
-        // Log detailed database error
-        Console.WriteLine($"Database Update Error: {dbEx.Message}");
-        return StatusCode(500, new { message = "Database update error occurred.", error = dbEx.Message });
-    }
-    catch (Exception ex)
-    {
-        // Log general error
-        Console.WriteLine($"General Error: {ex.Message}");
-        return StatusCode(500, new { message = "An error occurred while saving the initiative.", error = ex.Message });
-    }
-}
-
-
-        // PUT: api/TravelPost/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutInitiativePost(int id, InitiativePost initiativePost)
-        {
-            if (id != initiativePost.Id)
-                return BadRequest();
+            // Create a new InitiativePost object to save to the database
+            var initiativePost = new InitiativePost
+            {
+                Title = initiativePostRequest.Title,
+                Content = initiativePostRequest.Content,
+                AuthorId = int.Parse(userId), // Use the ID from the token
+                DatePublished = DateTime.UtcNow,
+                CategoryId = initiativePostRequest.CategoryId
+            };
 
             try
             {
+                // Add the new InitiativePost object to the database
+                _context.InitiativePosts.Add(initiativePost);
                 await _context.SaveChangesAsync();
+
+                // Return the newly created object
+                return CreatedAtAction(nameof(GetInitiativePost), new { id = initiativePost.Id }, initiativePost);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateException dbEx)
             {
-                if (!_context.InitiativePosts.Any(e => e.Id == id))
-                    return NotFound();
 
-                throw;
+                Console.WriteLine($"Database Update Error: {dbEx.Message}");
+                return StatusCode(500, new { message = "Database update error occurred.", error = dbEx.Message });
             }
+            catch (Exception ex)
+            {
 
-            return NoContent();
+                Console.WriteLine($"General Error: {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred while saving the initiative.", error = ex.Message });
+            }
         }
 
-        // DELETE: api/TravelPost/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteInitiativePost(int id)
+
+        [HttpGet("user")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<InitiativePost>>> GetUserInitiatives()
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User not logged in.");
+            }
+
+            var userInitiatives = await _context.InitiativePosts
+                .Where(i => i.AuthorId == int.Parse(userId))
+                .Include(i => i.Category) // Include Category if needed
+                .ToListAsync();
+
+            return Ok(userInitiatives);
+        }
+
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteInitiative(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var initiative = await _context.InitiativePosts.FindAsync(id);
+
             if (initiative == null)
+            {
                 return NotFound();
+            }
+
+            if (initiative.AuthorId != int.Parse(userId))
+            {
+                return Forbid("You can only delete your own initiatives.");
+            }
 
             _context.InitiativePosts.Remove(initiative);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateInitiative(int id, [FromBody] InitiativePost updatedInitiative)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var initiative = await _context.InitiativePosts.FindAsync(id);
+
+            if (initiative == null)
+            {
+                return NotFound();
+            }
+
+            if (initiative.AuthorId != int.Parse(userId))
+            {
+                return Forbid("You can only edit your own initiatives.");
+            }
+
+            initiative.Title = updatedInitiative.Title;
+            initiative.Content = updatedInitiative.Content;
+            initiative.CategoryId = updatedInitiative.CategoryId;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"Database update error: {ex.Message}");
+                return StatusCode(500, "Failed to update initiative.");
+            }
+        }
+
+
+
     }
 }

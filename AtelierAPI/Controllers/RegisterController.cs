@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using AtelierAPI.Data;
 using AtelierShared.Models;
-using BCrypt.Net; 
+using BCrypt.Net;
 
 
 namespace AtelierAPI.Controllers

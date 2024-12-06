@@ -17,7 +17,7 @@ namespace AtelierBlazorApp.Services
             var token = await GetTokenAsync();
             return !string.IsNullOrEmpty(token);
         }
-        
+
 
         public async Task<string> GetTokenAsync()
         {

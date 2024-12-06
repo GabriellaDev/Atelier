@@ -31,7 +31,7 @@ namespace AtelierAPI.Controllers
             {
                 Id = user.Id,
                 Username = user.Username,
-                Email = "example@example.com", 
+                Email = "example@example.com",
                 DateJoined = user.DateJoined
             });
 
@@ -53,8 +53,8 @@ namespace AtelierAPI.Controllers
             {
                 Id = user.Id,
                 Username = user.Username,
-                Email = "example@example.com", 
-                DateJoined = user.DateJoined 
+                Email = "example@example.com",
+                DateJoined = user.DateJoined
             };
 
             return Ok(sharedUser);
@@ -69,7 +69,7 @@ namespace AtelierAPI.Controllers
                 Username = sharedUser.Username,
                 Password = HashPassword(sharedUser.Password),
                 Role = "User",
-                DateJoined = DateTime.UtcNow 
+                DateJoined = DateTime.UtcNow
             };
 
             _context.Users.Add(apiUser);
@@ -79,7 +79,7 @@ namespace AtelierAPI.Controllers
             return CreatedAtAction("GetUser", new { id = sharedUser.Id }, sharedUser);
         }
 
-    
+
 
         // PUT: api/Users/5
         [HttpPut("{id}")]

@@ -31,7 +31,7 @@ namespace AtelierAPI.Controllers
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             // Validate the request
-            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password) 
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password)
             || string.IsNullOrWhiteSpace(request.Email))
             {
                 return BadRequest("Username and Password are required.");
@@ -51,7 +51,7 @@ namespace AtelierAPI.Controllers
             {
                 Username = request.Username,
                 Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Email = request.Email, 
+                Email = request.Email,
                 Role = "User", // Default role
                 DateJoined = DateTime.Now
             };
@@ -79,28 +79,28 @@ namespace AtelierAPI.Controllers
         }
 
         private string GenerateToken(AtelierShared.Models.User user)
-{
-    var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+        {
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
 
-    var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
 
-    var claims = new[]
-    {
+            var claims = new[]
+            {
         new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), // Use User ID
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         new Claim("role", user.Role)
     };
 
-    var token = new JwtSecurityToken(
-        issuer: _configuration["Jwt:Issuer"],
-        audience: _configuration["Jwt:Audience"],
-        claims: claims,
-        expires: DateTime.UtcNow.AddHours(12),
-        signingCredentials: credentials
-    );
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(12),
+                signingCredentials: credentials
+            );
 
-    return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+    }
 }
-    }
-    }
 
