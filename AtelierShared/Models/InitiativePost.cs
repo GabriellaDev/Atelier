@@ -3,16 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AtelierShared.Models
 {
-    [Table("TravelPosts")]
+    [Table("InitiativePosts")]
 
-    public class TravelPost
+    public class InitiativePost
     {
         public int Id { get; set; } // Unified primary key
 
         [Required]
         public string? Title { get; set; }
-
-        public string Country { get; set; } = "Unknown"; // Default value
 
         [Required]
         public string? Content { get; set; }
@@ -20,5 +18,8 @@ namespace AtelierShared.Models
         public int AuthorId { get; set; } // Foreign key to User
 
         public DateTime DatePublished { get; set; } = DateTime.UtcNow; // Default value
+
+        public int CategoryId { get; set; } // Foreign key to CategoryModel
+        public CategoryModel? Category { get; set; }
     }
 }

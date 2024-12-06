@@ -1,0 +1,56 @@
+@page "/Auth/register"
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@using AtelierShared.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+
+
+<div class="register-container">
+    <h3>Register</h3>
+    <EditForm Model="@registerRequest" OnValidSubmit="HandleRegister">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <InputText id="username" class="form-control" @bind-Value="registerRequest.Username" />
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <InputText id="password" class="form-control" @bind-Value="registerRequest.Password" type="password" />
+        </div>
+         <div>
+        <label>Email:</label>
+        <InputText @bind-Value="registerRequest.Email" />
+    </div>
+
+        <button type="submit" class="btn btn-primary">Register</button>
+    </EditForm>
+</div>
+
+@code {
+    private RegisterRequest registerRequest = new RegisterRequest();
+
+    private async Task HandleRegister()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync("https://localhost:5062/api/Auth/Register", registerRequest);
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("User registered successfully!");
+                Navigation.NavigateTo("/Auth/login");
+            }
+            else
+            {
+                Console.WriteLine($"Failed to register user: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during registration: {ex.Message}");
+        }
+    }
+}

@@ -1,0 +1,73 @@
+@page "/initiatives"
+@inject HttpClient Http
+@using AtelierShared.Models
+
+<style>
+    .initiatives-container {
+    max-height: calc(100vh - 100px); /* Adjust for header/footer height */
+    overflow-y: auto;  /* Enable scrolling if content exceeds the height */
+    padding: 20px;
+    margin: 0;
+}
+</style>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12 text-center">
+            <h1 class="mb-4">Browse Initiatives</h1>
+        </div>
+    </div>
+
+    @if (Initiatives == null)
+    {
+        <div class="text-center">
+            <p>Loading initiatives...</p>
+        </div>
+    }
+    else if (!Initiatives.Any())
+    {
+        <div class="text-center">
+            <p>No initiatives available yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var initiative in Initiatives)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow">
+                        <div class="card-body">
+                            <h5 class="card-title">@initiative.Title</h5>
+                            <p class="card-text">@initiative.Content</p>
+                            <p><strong>Category:</strong> @initiative.Category?.Category</p>
+                            <p><small class="text-muted">Published on: @initiative.DatePublished.ToString("dd MMM yyyy")</small></p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<InitiativePost> Initiatives = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInitiativesAsync();
+    }
+
+    private async Task LoadInitiativesAsync()
+    {
+        try
+        {
+            Initiatives = await Http.GetFromJsonAsync<List<InitiativePost>>("https://localhost:5062/api/InitiativePosts");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load initiatives: {ex.Message}");
+            // Optional: Show a message to the user
+        }
+    }
+}

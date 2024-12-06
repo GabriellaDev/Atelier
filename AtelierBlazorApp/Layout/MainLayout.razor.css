@@ -1,5 +1,6 @@
 .page {
     position: relative;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
 }
@@ -8,6 +9,8 @@ main {
     margin: 0; /* Remove any extra margin */
     padding: 0; /* Remove any extra padding */
     flex: 1;
+    overflow-y: auto;
+    min-height: 100vh;
 }
 
 .sidebar {

@@ -1,0 +1,24 @@
+@page "/account"
+@inject NavigationManager Navigation
+
+<div class="container my-5 text-center">
+    <h1>Welcome to the Initiative Platform</h1>
+    <p>To propose an initiative, you need to have an account. Please log in or register to get started.</p>
+
+    <div class="mt-4">
+        <button class="btn btn-primary btn-lg m-2" @onclick="NavigateToLogin">Log In</button>
+        <button class="btn btn-secondary btn-lg m-2" @onclick="NavigateToRegister">Register</button>
+    </div>
+</div>
+
+@code {
+    private void NavigateToLogin()
+    {
+        Navigation.NavigateTo("/auth/login");
+    }
+
+    private void NavigateToRegister()
+    {
+        Navigation.NavigateTo("/auth/register");
+    }
+}
