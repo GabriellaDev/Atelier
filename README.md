@@ -68,5 +68,5 @@ These additional features represent future extensions of the platform and would 
 
 ---
 
-!important! THE PROJECT DOCUMENTATION (DEVELOPER GUIDE please check the PDF DevelopersGuide )
+!important! THE PROJECT DOCUMENTATION DEVELOPER GUIDE please check [DevelopersGuide](./DevelopersGuide.pdf)
 
